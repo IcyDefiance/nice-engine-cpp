@@ -1,13 +1,14 @@
 #pragma once
 #include <string>
 
-namespace util {
-	template <typename T>
-	using Arc = std::shared_ptr<T>;
+using u32 = uint32_t;
+using u16 = uint16_t;
 
-	#ifdef _WIN32
-	using OsString = std::wstring;
-	#else
-	using OsString = std::string;
-	#endif
-}
+template <typename T>
+using Ref = std::shared_ptr<T>;
+
+#ifdef _WIN32
+using OsString = std::wstring;
+#else
+using OsString = std::string;
+#endif

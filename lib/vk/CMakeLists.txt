@@ -1,4 +1,5 @@
-add_library(vk src/vk.cpp)
+add_library(vk src/vk.cpp src/version.cpp)
+target_link_libraries(vk fmt)
 set_property(TARGET vk PROPERTY CXX_STANDARD 17)
 target_include_directories(vk PRIVATE ../../include ../util/include)
 target_include_directories(vk PUBLIC ../util/include ../Vulkan-Headers/include)

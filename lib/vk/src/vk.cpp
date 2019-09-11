@@ -12,9 +12,9 @@
 #include <iostream>
 
 using namespace std;
-using namespace util;
 
-#define LOAD_VK_INSTANCE_PFN(instance, name) this->##name = (PFN_##name)vkGetInstanceProcAddr(instance, #name);
+#define LOAD_VK_INSTANCE_PFN(instance, name) \
+	this->##name = reinterpret_cast<PFN_##name>(vkGetInstanceProcAddr(instance, #name));
 
 namespace vk {
 	#ifdef _WIN32
@@ -77,12 +77,23 @@ namespace vk {
 		auto module = LoadLibrary(L"vulkan-1.dll");
 		if (!module) { return Err(getLastErrorMessage()); }
 
-		auto vkGetInstanceProcAddr = (PFN_vkGetInstanceProcAddr)(GetProcAddress(module, "vkGetInstanceProcAddr"));
+		auto vkGetInstanceProcAddr =
+			reinterpret_cast<PFN_vkGetInstanceProcAddr>(GetProcAddress(module, "vkGetInstanceProcAddr"));
 		if (!vkGetInstanceProcAddr) { return Err(getLastErrorMessage()); }
 #endif
 
 		Vulkan ret;
 		ret.impl = make_shared<Impl>(module, vkGetInstanceProcAddr);
 		return Ok(ret);
+	}
+
+	Version Vulkan::enumerateInstanceVersion() {
+		if (!this->impl->vkEnumerateInstanceVersion) {
+			return Version(1, 0, 0);
+		}
+
+		u32 vk;
+		this->impl->vkEnumerateInstanceVersion(&vk);
+		return Version(vk);
 	}
 }
