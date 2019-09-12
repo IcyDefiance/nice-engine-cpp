@@ -33,6 +33,8 @@ namespace vk {
 
 		Fns fns;
 		LOAD_VK_INSTANCE_PFN(vk, vkDestroyInstance);
+		LOAD_VK_INSTANCE_PFN(vk, vkEnumeratePhysicalDevices);
+
 		return Ok(Instance(lib, vk, fns));
 	}
 

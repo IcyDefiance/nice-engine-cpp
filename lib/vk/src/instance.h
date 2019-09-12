@@ -17,6 +17,7 @@ namespace vk {
 		VkInstance vk;
 		struct Fns {
 			PFN_vkDestroyInstance vkDestroyInstance;
+			PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices;
 		} fns;
 
 		static Result<Instance, InstanceCreateErr> create(Ref<Vulkan> lib);

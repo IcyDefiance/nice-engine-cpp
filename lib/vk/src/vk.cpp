@@ -71,6 +71,7 @@ namespace vk {
 		LOAD_VK_PFN(vkEnumerateInstanceExtensionProperties);
 		LOAD_VK_PFN(vkEnumerateInstanceLayerProperties);
 		LOAD_VK_PFN(vkCreateInstance);
+
 		return Ok(make_shared<Vulkan>(module, fns));
 	}
 

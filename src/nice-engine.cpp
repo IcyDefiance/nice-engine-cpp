@@ -21,5 +21,7 @@ void say_hello() {
 		fmt::print("    {} ({} rev {})\n", layer.name(), layer.specVer(), layer.implVer());
 	}
 
-	auto instance = Instance::create(vulkan);
+	auto instance = Instance::create(vulkan).unwrap();
+	auto pdevs = PhysicalDevice::enumerate(instance).unwrap();
+	fmt::print("{} device(s) found", pdevs.size());
 }
