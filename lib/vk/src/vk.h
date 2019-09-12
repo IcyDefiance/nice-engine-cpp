@@ -45,8 +45,18 @@ namespace vk {
 
 	struct Vulkan
 	{
-		static Result<Vulkan, OsString> create();
+		const void* module;
+		struct Fns {
+			PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
+			PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion;
+			PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties;
+			PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties;
+			PFN_vkCreateInstance vkCreateInstance;
+		} fns;
 
+		static Result<Ref<Vulkan>, OsString> create();
+
+		Vulkan(const void* module, Fns fns);
 		Vulkan(const Vulkan&) = delete;
 		Vulkan(Vulkan&&);
 		~Vulkan() noexcept;
@@ -54,15 +64,5 @@ namespace vk {
 		Version enumerateInstanceVersion() const;
 		Result<Vec<ExtProps>, InstanceExtPropsError> instanceExtProps() const;
 		Result<Vec<LayerProps>, InstanceLayerPropsError> instanceLayerProps() const;
-
-	private:
-		const void* module;
-		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
-		PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion;
-		PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties;
-		PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties;
-		PFN_vkCreateInstance vkCreateInstance;
-
-		Vulkan() = default;
 	};
 }

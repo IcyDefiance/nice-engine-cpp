@@ -1,4 +1,3 @@
-#include "vk.h"
 #define UNICODE
 #define WIN32_LEAN_AND_MEAN
 #include "Windows.h"
@@ -6,11 +5,12 @@
 #undef UNICODE
 
 #include <iostream>
+#include "vk.h"
 
 using namespace std;
 
-#define LOAD_VK_INSTANCE_PFN(instance, name) \
-	ret.##name = reinterpret_cast<PFN_##name>(vkGetInstanceProcAddr(instance, #name));
+#define LOAD_VK_PFN(name) \
+	fns.##name = reinterpret_cast<PFN_##name>(vkGetInstanceProcAddr(nullptr, #name));
 
 namespace vk {
 	#ifdef _WIN32
@@ -55,7 +55,7 @@ namespace vk {
 		return Str(this->description, strlen(this->description));
 	}
 
-	Result<Vulkan, wstring> Vulkan::create() {
+	Result<Ref<Vulkan>, wstring> Vulkan::create() {
 #ifdef _WIN32
 		auto module = LoadLibrary(L"vulkan-1.dll");
 		if (!module) { return Err(getLastErrorMessage()); }
@@ -65,23 +65,18 @@ namespace vk {
 		if (!vkGetInstanceProcAddr) { return Err(getLastErrorMessage()); }
 #endif
 
-		Vulkan ret;
-		ret.module = module;
-		LOAD_VK_INSTANCE_PFN(nullptr, vkEnumerateInstanceVersion);
-		LOAD_VK_INSTANCE_PFN(nullptr, vkEnumerateInstanceExtensionProperties);
-		LOAD_VK_INSTANCE_PFN(nullptr, vkEnumerateInstanceLayerProperties);
-		LOAD_VK_INSTANCE_PFN(nullptr, vkCreateInstance);
-		return Ok(move(ret));
+		Fns fns;
+		fns.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+		LOAD_VK_PFN(vkEnumerateInstanceVersion);
+		LOAD_VK_PFN(vkEnumerateInstanceExtensionProperties);
+		LOAD_VK_PFN(vkEnumerateInstanceLayerProperties);
+		LOAD_VK_PFN(vkCreateInstance);
+		return Ok(make_shared<Vulkan>(module, fns));
 	}
 
-	Vulkan::Vulkan(Vulkan&& other) :
-		module(other.module),
-		vkGetInstanceProcAddr(other.vkGetInstanceProcAddr),
-		vkEnumerateInstanceVersion(other.vkEnumerateInstanceVersion),
-		vkEnumerateInstanceExtensionProperties(other.vkEnumerateInstanceExtensionProperties),
-		vkEnumerateInstanceLayerProperties(other.vkEnumerateInstanceLayerProperties),
-		vkCreateInstance(other.vkCreateInstance)
-	{
+	Vulkan::Vulkan(const void* module, Fns fns) : module(module), fns(fns) {}
+
+	Vulkan::Vulkan(Vulkan&& other) : module(other.module), fns(other.fns) {
 		other.module = nullptr;
 	}
 
@@ -95,12 +90,12 @@ namespace vk {
 	// Success
 	// * VK_SUCCESS
 	Version Vulkan::enumerateInstanceVersion() const {
-		if (!this->vkEnumerateInstanceVersion) {
+		if (!this->fns.vkEnumerateInstanceVersion) {
 			return Version(1, 0, 0);
 		}
 
 		u32 vk;
-		if (this->vkEnumerateInstanceVersion(&vk)) {
+		if (this->fns.vkEnumerateInstanceVersion(&vk)) {
 			terminate();
 		}
 		return Version(vk);
@@ -118,14 +113,14 @@ namespace vk {
 		// return VK_INCOMPLETE, so we try again until we get VK_SUCCESS.
 		while (true) {
 			u32 size;
-			auto res = this->vkEnumerateInstanceExtensionProperties(nullptr, &size, nullptr);
+			auto res = this->fns.vkEnumerateInstanceExtensionProperties(nullptr, &size, nullptr);
 			if (res != VK_SUCCESS) {
 				return Err(static_cast<InstanceExtPropsError>(res));
 			}
 
 			Vec<ExtProps> ret(size);
 			auto data = reinterpret_cast<VkExtensionProperties*>(ret.data());
-			res = this->vkEnumerateInstanceExtensionProperties(nullptr, &size, data);
+			res = this->fns.vkEnumerateInstanceExtensionProperties(nullptr, &size, data);
 			if (res == VK_SUCCESS) {
 				return Ok(ret);
 			} else if (res != VK_INCOMPLETE) {
@@ -145,14 +140,14 @@ namespace vk {
 		// return VK_INCOMPLETE, so we try again until we get VK_SUCCESS.
 		while (true) {
 			u32 size;
-			auto res = this->vkEnumerateInstanceLayerProperties(&size, nullptr);
+			auto res = this->fns.vkEnumerateInstanceLayerProperties(&size, nullptr);
 			if (res != VK_SUCCESS) {
 				return Err(static_cast<InstanceLayerPropsError>(res));
 			}
 
 			Vec<LayerProps> ret(size);
 			auto data = reinterpret_cast<VkLayerProperties*>(ret.data());
-			res = this->vkEnumerateInstanceLayerProperties(&size, data);
+			res = this->fns.vkEnumerateInstanceLayerProperties(&size, data);
 			if (res == VK_SUCCESS) {
 				return Ok(ret);
 			} else if (res != VK_INCOMPLETE) {
