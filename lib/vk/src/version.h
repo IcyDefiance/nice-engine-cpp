@@ -1,11 +1,11 @@
 #pragma once
-#include "util.h"
+#include "util/util.h"
 #include "fmt/core.h"
 
 namespace vk {
 	struct Version
 	{
-		Version(u32 vk);
+		explicit Version(u32 vk);
 		Version(u16 major, u16 minor, u16 patch);
 
 		u16 major() const;
