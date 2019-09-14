@@ -13,8 +13,15 @@ namespace vk {
 		const Instance& instance;
 		VkPhysicalDevice vk;
 
-		static Result<Vec<PhysicalDevice>, PhysicalDeviceEnumErr> enumerate(const Instance& instance);
+		static auto enumerate(const Instance& instance) {
+			return enumerateImpl(instance).map([&](auto&& vks) {
+				return iter(move(vks)) | Transform([&](auto vk) { return PhysicalDevice(instance, vk); });
+			});
+		}
 
 		PhysicalDevice(const Instance& instance, VkPhysicalDevice vk);
+
+	private:
+		static Result<Vec<VkPhysicalDevice>, PhysicalDeviceEnumErr> enumerateImpl(const Instance& instance);
 	};
 }

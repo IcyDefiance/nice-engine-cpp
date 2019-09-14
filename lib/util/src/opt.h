@@ -31,9 +31,9 @@ public:
 	template <typename F>
 	Opt<FRet<F>> map(F cb) {
 		if (auto val = std::get_if<Some<T>>(&this->val)) {
-			return Opt<FRet<F>>(Some(cb(move(*val).unwrap())));
+			return Some(cb(move(*val).unwrap()));
 		} else {
-			return Opt<FRet<F>>(None());
+			return None();
 		}
 	}
 

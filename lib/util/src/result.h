@@ -3,8 +3,8 @@
 
 template <typename T>
 struct Ok {
-	Ok(T& val): val(val) {}
-	Ok(T&& val): val(std::move(val)) {}
+	explicit Ok(T& val): val(val) {}
+	explicit Ok(T&& val): val(std::move(val)) {}
 
 	T&& unwrap() && {
 		return std::move(this->val);
@@ -16,8 +16,8 @@ private:
 
 template <typename E>
 struct Err {
-	Err(E& val): val(val) {}
-	Err(E&& val): val(std::move(val)) {}
+	explicit Err(E& val): val(val) {}
+	explicit Err(E&& val): val(std::move(val)) {}
 
 private:
 	E val;
@@ -26,8 +26,22 @@ private:
 template <typename T, typename E>
 struct Result
 {
+private:
+	template <typename F>
+	using FRet = std::invoke_result_t<F, T&&>;
+
+public:
 	Result(Ok<T>&& ok): val(std::move(ok)) {}
 	Result(Err<E>&& err): val(std::move(err)) {}
+
+	template <typename F>
+	Result<FRet<F>, E> map(F cb) {
+		if (auto val = std::get_if<Ok<T>>(&this->val)) {
+			return Ok(cb(move(*val).unwrap()));
+		} else {
+			return std::get<Err<E>>(move(this->val));
+		}
+	}
 
 	T&& unwrap() && {
 		return std::get<Ok<T>>(std::move(this->val)).unwrap();

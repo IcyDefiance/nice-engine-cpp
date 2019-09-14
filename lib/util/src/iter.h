@@ -81,3 +81,14 @@ template <typename I, typename F>
 TransformIter<I, F> operator|(I iter, Transform<F> proxy) {
 	return TransformIter(move(iter), proxy.func);
 }
+
+struct Count {};
+
+template <typename I>
+usize operator|(I& iter, Count proxy) {
+	usize count = 0;
+	while (iter.next()) {
+		count++;
+	}
+	return count;
+}
