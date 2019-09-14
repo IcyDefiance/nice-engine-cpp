@@ -1,6 +1,8 @@
 #pragma once
 #include "opt.h"
 
+/*** ROOTS ***/
+
 template <typename Cur, typename End>
 struct StdIter {
 	using Item = std::reference_wrapper<typename std::iterator_traits<Cur>::value_type>;
@@ -51,6 +53,8 @@ StdIter<typename T::iterator, typename T::iterator> iter(T& source) {
 	return StdIter(source.begin(), source.end());
 }
 
+/*** OPERATORS ***/
+
 template <typename I, typename F>
 struct TransformIter {
 	using Item = decltype(std::declval<F>()(std::declval<I::Item>()));
@@ -82,6 +86,8 @@ TransformIter<I, F> operator|(I iter, Transform<F> proxy) {
 	return TransformIter(move(iter), proxy.func);
 }
 
+/*** COLLECTORS ***/
+
 struct Count {};
 
 template <typename I>
@@ -91,4 +97,11 @@ usize operator|(I& iter, Count proxy) {
 		count++;
 	}
 	return count;
+}
+
+struct First {};
+
+template <typename I>
+Opt<typename I::Item> operator|(I& iter, First proxy) {
+	return iter.next();
 }

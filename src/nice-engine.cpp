@@ -24,6 +24,8 @@ void say_hello() {
 
 	auto instance = Instance::create(vulkan).unwrap();
 
-	auto pdevs = PhysicalDevice::enumerate(instance).unwrap();
-	fmt::print("{} device(s) found\n", pdevs | Count());
+	// TODO: check for graphics support
+	auto pdev = (PhysicalDevice::enumerate(instance).unwrap() | First()).unwrap();
+	static_assert(is_same<decltype(pdev), PhysicalDevice>::value);
+	// fmt::print("{} device(s) found\n", pdevs | Count());
 }
