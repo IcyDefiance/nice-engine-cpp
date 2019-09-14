@@ -1,5 +1,7 @@
 #include "instance.h"
 
+using namespace std;
+
 #define LOAD_VK_INSTANCE_PFN(instance, name) \
 	fns.##name = reinterpret_cast<PFN_##name>(lib->fns.vkGetInstanceProcAddr(instance, #name));
 
@@ -13,7 +15,7 @@ namespace vk {
 	// * VK_ERROR_LAYER_NOT_PRESENT
 	// * VK_ERROR_EXTENSION_NOT_PRESENT
 	// * VK_ERROR_INCOMPATIBLE_DRIVER
-	Result<Instance, InstanceCreateErr> Instance::create(Ref<Vulkan> lib) {
+	Result<Ref<Instance>, InstanceCreateErr> Instance::create(Ref<Vulkan> lib) {
 		VkInstanceCreateInfo createInfo;
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		createInfo.pNext = nullptr;
@@ -32,10 +34,12 @@ namespace vk {
 		}
 
 		Fns fns;
+		LOAD_VK_INSTANCE_PFN(vk, vkCreateDevice);
 		LOAD_VK_INSTANCE_PFN(vk, vkDestroyInstance);
 		LOAD_VK_INSTANCE_PFN(vk, vkEnumeratePhysicalDevices);
+		LOAD_VK_INSTANCE_PFN(vk, vkGetDeviceProcAddr);
 
-		return Ok(Instance(lib, vk, fns));
+		return Ok(make_shared<Instance>(lib, vk, fns));
 	}
 
 	Instance::Instance(Ref<Vulkan> lib, VkInstance vk, Fns fns) : lib(lib), vk(vk), fns(fns) {}

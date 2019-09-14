@@ -26,6 +26,5 @@ void say_hello() {
 
 	// TODO: check for graphics support
 	auto pdev = (PhysicalDevice::enumerate(instance).unwrap() | First()).unwrap();
-	static_assert(is_same<decltype(pdev), PhysicalDevice>::value);
-	// fmt::print("{} device(s) found\n", pdevs | Count());
+	auto dev = Device::create(pdev).unwrap();
 }

@@ -16,11 +16,13 @@ namespace vk {
 		Ref<Vulkan> lib;
 		VkInstance vk;
 		struct Fns {
+			PFN_vkCreateDevice vkCreateDevice;
 			PFN_vkDestroyInstance vkDestroyInstance;
 			PFN_vkEnumeratePhysicalDevices vkEnumeratePhysicalDevices;
+			PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
 		} fns;
 
-		static Result<Instance, InstanceCreateErr> create(Ref<Vulkan> lib);
+		static Result<Ref<Instance>, InstanceCreateErr> create(Ref<Vulkan> lib);
 
 		Instance(Ref<Vulkan> lib, VkInstance vk, Fns fns);
 		Instance(const Instance&) = delete;

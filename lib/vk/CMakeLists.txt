@@ -1,4 +1,4 @@
-add_library(vk src/vk.cpp src/version.cpp src/instance.cpp src/physical-device.cpp)
+add_library(vk src/vk.cpp src/version.cpp src/instance.cpp src/physical-device.cpp src/device.cpp)
 target_link_libraries(vk fmt)
 set_property(TARGET vk PROPERTY CXX_STANDARD 17)
 target_include_directories(vk PRIVATE ../../include ../util/include)
