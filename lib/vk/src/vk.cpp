@@ -1,8 +1,10 @@
+#ifdef _WIN32
 #define UNICODE
 #define WIN32_LEAN_AND_MEAN
 #include "Windows.h"
 #undef WIN32_LEAN_AND_MEAN
 #undef UNICODE
+#endif
 
 #include <iostream>
 #include "vk.h"

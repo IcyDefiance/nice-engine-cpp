@@ -1,6 +1,6 @@
 #pragma once
-#include "util/util.h"
 #include "fmt/core.h"
+#include "util/util.h"
 
 namespace vk {
 	struct Version

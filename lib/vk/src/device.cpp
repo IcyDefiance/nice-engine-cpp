@@ -38,10 +38,10 @@ namespace vk {
 		Fns fns;
 		LOAD_VK_DEVICE_PFN(vk, vkDestroyDevice);
 
-		return Ok(Device(instance, pdev.vk, fns));
+		return Ok(Device(instance, vk, pdev.vk, fns));
 	}
 
-	Device::Device(Ref<Instance> instance, VkPhysicalDevice pdev, Fns fns) : instance(instance), vk(vk), fns(fns) {}
+	Device::Device(Ref<Instance> instance, VkDevice vk, VkPhysicalDevice pdev, Fns fns) : instance(instance), vk(vk), pdev(pdev), fns(fns) {}
 
 	Device::Device(Device&& other) : instance(other.instance), vk(other.vk), fns(other.fns) {
 		other.vk = nullptr;

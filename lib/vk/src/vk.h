@@ -1,6 +1,6 @@
 #pragma once
-#include "util/util.h"
 #include "version.h"
+#include "util/util.h"
 #include <string>
 #include <vector>
 
