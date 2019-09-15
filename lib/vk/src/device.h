@@ -14,17 +14,16 @@ namespace vk {
 
 	struct Device
 	{
-		Ref<Instance> instance;
 		VkDevice vk;
-		VkPhysicalDevice pdev;
+		Ref<PhysicalDevice> pdev;
 		struct Fns {
 			PFN_vkDestroyDevice vkDestroyDevice;
 			PFN_vkGetDeviceProcAddr vkGetDeviceProcAddr;
 		} fns;
 
-		static Result<Device, DeviceCreateErr> create(const PhysicalDevice& pdev);
+		static Result<Device, DeviceCreateErr> create(Ref<PhysicalDevice> pdev);
 
-		Device(Ref<Instance> instance, VkDevice vk, VkPhysicalDevice pdev, Fns fns);
+		Device(Ref<PhysicalDevice> pdev, VkDevice vk, Fns fns);
 		Device(const Device&) = delete;
 		Device(Device&&);
 		~Device() noexcept;

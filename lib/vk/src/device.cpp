@@ -1,7 +1,7 @@
 #include "device.h"
 
 #define LOAD_VK_DEVICE_PFN(device, name) \
-	fns.##name = reinterpret_cast<PFN_##name>(instance->fns.vkGetDeviceProcAddr(device, #name));
+	fns.##name = reinterpret_cast<PFN_##name>(pdev->instance->fns.vkGetDeviceProcAddr(device, #name));
 
 namespace vk {
 	// Success
@@ -13,9 +13,7 @@ namespace vk {
 	// * VK_ERROR_LAYER_NOT_PRESENT
 	// * VK_ERROR_EXTENSION_NOT_PRESENT
 	// * VK_ERROR_INCOMPATIBLE_DRIVER
-	Result<Device, DeviceCreateErr> Device::create(const PhysicalDevice& pdev) {
-		auto instance = pdev.instance;
-
+	Result<Device, DeviceCreateErr> Device::create(Ref<PhysicalDevice> pdev) {
 		VkDeviceCreateInfo createInfo;
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		createInfo.pNext = nullptr;
@@ -30,7 +28,7 @@ namespace vk {
 
 		// TODO: support allocation callbacks
 		VkDevice vk;
-		auto res = instance->fns.vkCreateDevice(pdev.vk, &createInfo, nullptr, &vk);
+		auto res = pdev->instance->fns.vkCreateDevice(pdev->vk, &createInfo, nullptr, &vk);
 		if (res != VK_SUCCESS) {
 			return Err(static_cast<DeviceCreateErr>(res));
 		}
@@ -38,12 +36,12 @@ namespace vk {
 		Fns fns;
 		LOAD_VK_DEVICE_PFN(vk, vkDestroyDevice);
 
-		return Ok(Device(instance, vk, pdev.vk, fns));
+		return Ok(Device(pdev, vk, fns));
 	}
 
-	Device::Device(Ref<Instance> instance, VkDevice vk, VkPhysicalDevice pdev, Fns fns) : instance(instance), vk(vk), pdev(pdev), fns(fns) {}
+	Device::Device(Ref<PhysicalDevice> pdev, VkDevice vk, Fns fns) : pdev(pdev), vk(vk), fns(fns) {}
 
-	Device::Device(Device&& other) : instance(other.instance), vk(other.vk), fns(other.fns) {
+	Device::Device(Device&& other) : pdev(pdev), vk(other.vk), fns(other.fns) {
 		other.vk = nullptr;
 	}
 

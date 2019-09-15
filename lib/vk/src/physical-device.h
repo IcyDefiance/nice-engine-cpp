@@ -10,18 +10,18 @@ namespace vk {
 
 	struct PhysicalDevice
 	{
-		const Ref<Instance>& instance;
+		Ref<Instance> instance;
 		VkPhysicalDevice vk;
 
-		static auto enumerate(const Ref<Instance>& instance) {
+		static auto enumerate(Ref<Instance> instance) {
 			return enumerateImpl(instance).map([&](auto&& vks) {
-				return iter(move(vks)) | Transform([&](auto vk) { return PhysicalDevice(instance, vk); });
+				return iter(move(vks)) | Transform([&](auto vk) { return std::make_shared<PhysicalDevice>(instance, vk); });
 			});
 		}
 
-		PhysicalDevice(const Ref<Instance>& instance, VkPhysicalDevice vk);
+		PhysicalDevice(Ref<Instance> instance, VkPhysicalDevice vk);
 
 	private:
-		static Result<Vec<VkPhysicalDevice>, PhysicalDeviceEnumErr> enumerateImpl(const Ref<Instance>& instance);
+		static Result<Vec<VkPhysicalDevice>, PhysicalDeviceEnumErr> enumerateImpl(Ref<Instance> instance);
 	};
 }
