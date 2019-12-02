@@ -8,17 +8,17 @@ namespace vk {
 	// * VK_ERROR_OUT_OF_HOST_MEMORY
 	// * VK_ERROR_OUT_OF_DEVICE_MEMORY
 	// * VK_ERROR_INITIALIZATION_FAILED
-	Result<Vec<VkPhysicalDevice>, PhysicalDeviceEnumErr> PhysicalDevice::enumerateImpl(Ref<Instance> instance) {
+	Result<Vec<VkPhysicalDevice>, VkResult> PhysicalDevice::enumerateImpl(Ref<Instance> instance) {
 		u32 size;
 		auto res = instance->fns.vkEnumeratePhysicalDevices(instance->vk, &size, nullptr);
 		if (res != VK_SUCCESS) {
-			return Err(static_cast<PhysicalDeviceEnumErr>(res));
+			return Err(res);
 		}
 
 		Vec<VkPhysicalDevice> ret(size);
 		res = instance->fns.vkEnumeratePhysicalDevices(instance->vk, &size, ret.data());
 		if (res != VK_SUCCESS) {
-			return Err(static_cast<PhysicalDeviceEnumErr>(res));
+			return Err(res);
 		}
 
 		return Ok(ret);

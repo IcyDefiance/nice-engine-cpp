@@ -1,7 +1,6 @@
 #pragma once
 #include "version.h"
 #include "util/util.h"
-#include <string>
 #include <vector>
 
 #define VK_NO_PROTOTYPES
@@ -10,59 +9,43 @@
 
 namespace vk {
 	struct ExtProps {
-		Str name() const;
-		u32 specVer() const;
+		VkExtensionProperties data;
 
-	private:
-		char extName[256];
-		u32 specVersion;
+		const char* name() const;
+		u32 specVer() const;
 	};
-	static_assert(sizeof(ExtProps) == sizeof(VkExtensionProperties));
 
 	struct LayerProps {
-		Str name() const;
+		VkLayerProperties data;
+
+		const char* name() const;
 		Version specVer() const;
 		u32 implVer() const;
-		Str desc() const;
-
-	private:
-		char layerName[256];
-		u32 specVersion;
-		u32 implVersion;
-		char description[256];
+		const char* desc() const;
 	};
 
-	enum class InstanceExtPropsError {
-		OutOfHostMemory = VK_ERROR_OUT_OF_HOST_MEMORY,
-		OutOfDeviceMemory = VK_ERROR_OUT_OF_DEVICE_MEMORY,
-		LayerNotPresent = VK_ERROR_LAYER_NOT_PRESENT,
-	};
-
-	enum class InstanceLayerPropsError {
-		OutOfHostMemory = VK_ERROR_OUT_OF_HOST_MEMORY,
-		OutOfDeviceMemory = VK_ERROR_OUT_OF_DEVICE_MEMORY,
+	struct VulkanFns {
+		PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
+		PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion;
+		PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties;
+		PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties;
+		PFN_vkCreateInstance vkCreateInstance;
 	};
 
 	struct Vulkan
 	{
 		const void* module;
-		struct Fns {
-			PFN_vkGetInstanceProcAddr vkGetInstanceProcAddr;
-			PFN_vkEnumerateInstanceVersion vkEnumerateInstanceVersion;
-			PFN_vkEnumerateInstanceExtensionProperties vkEnumerateInstanceExtensionProperties;
-			PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties;
-			PFN_vkCreateInstance vkCreateInstance;
-		} fns;
+		VulkanFns fns;
 
 		static Result<Ref<Vulkan>, OsString> create();
 
-		Vulkan(const void* module, Fns fns);
+		Vulkan(const void* module, VulkanFns fns);
 		Vulkan(const Vulkan&) = delete;
 		Vulkan(Vulkan&&);
 		~Vulkan() noexcept;
 
 		Version enumerateInstanceVersion() const;
-		Result<Vec<ExtProps>, InstanceExtPropsError> instanceExtProps() const;
-		Result<Vec<LayerProps>, InstanceLayerPropsError> instanceLayerProps() const;
+		Result<Vec<ExtProps>, VkResult> instanceExtProps() const;
+		Result<Vec<LayerProps>, VkResult> instanceLayerProps() const;
 	};
 }

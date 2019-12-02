@@ -13,7 +13,7 @@ namespace vk {
 	// * VK_ERROR_LAYER_NOT_PRESENT
 	// * VK_ERROR_EXTENSION_NOT_PRESENT
 	// * VK_ERROR_INCOMPATIBLE_DRIVER
-	Result<Device, DeviceCreateErr> Device::create(Ref<PhysicalDevice> pdev) {
+	Result<Device, VkResult> Device::create(Ref<PhysicalDevice> pdev) {
 		VkDeviceCreateInfo createInfo;
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
 		createInfo.pNext = nullptr;
@@ -30,16 +30,16 @@ namespace vk {
 		VkDevice vk;
 		auto res = pdev->instance->fns.vkCreateDevice(pdev->vk, &createInfo, nullptr, &vk);
 		if (res != VK_SUCCESS) {
-			return Err(static_cast<DeviceCreateErr>(res));
+			return Err(res);
 		}
 
-		Fns fns;
+		DeviceFns fns;
 		LOAD_VK_DEVICE_PFN(vk, vkDestroyDevice);
 
 		return Ok(Device(pdev, vk, fns));
 	}
 
-	Device::Device(Ref<PhysicalDevice> pdev, VkDevice vk, Fns fns) : pdev(pdev), vk(vk), fns(fns) {}
+	Device::Device(Ref<PhysicalDevice> pdev, VkDevice vk, DeviceFns fns) : pdev(pdev), vk(vk), fns(fns) {}
 
 	Device::Device(Device&& other) : pdev(pdev), vk(other.vk), fns(other.fns) {
 		other.vk = nullptr;

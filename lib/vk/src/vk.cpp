@@ -33,31 +33,31 @@ namespace vk {
 	}
 	#endif
 
-	Str ExtProps::name() const {
-		return Str(this->extName, strlen(this->extName));
+	const char* ExtProps::name() const {
+		return this->data.extensionName;
 	}
 
 	u32 ExtProps::specVer() const {
-		return this->specVersion;
+		return this->data.specVersion;
 	}
 
-	Str LayerProps::name() const {
-		return Str(this->layerName, strlen(this->layerName));
+	const char* LayerProps::name() const {
+		return this->data.layerName;
 	}
 
 	Version LayerProps::specVer() const {
-		return Version(this->specVersion);
+		return Version(this->data.specVersion);
 	}
 
 	u32 LayerProps::implVer() const {
-		return this->implVersion;
+		return this->data.implementationVersion;
 	}
 
-	Str LayerProps::desc() const {
-		return Str(this->description, strlen(this->description));
+	const char* LayerProps::desc() const {
+		return this->data.description;
 	}
 
-	Result<Ref<Vulkan>, wstring> Vulkan::create() {
+	Result<Ref<Vulkan>, OsString> Vulkan::create() {
 #ifdef _WIN32
 		auto module = LoadLibrary(L"vulkan-1.dll");
 		if (!module) { return Err(getLastErrorMessage()); }
@@ -67,7 +67,7 @@ namespace vk {
 		if (!vkGetInstanceProcAddr) { return Err(getLastErrorMessage()); }
 #endif
 
-		Fns fns;
+		VulkanFns fns;
 		fns.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
 		LOAD_VK_PFN(vkEnumerateInstanceVersion);
 		LOAD_VK_PFN(vkEnumerateInstanceExtensionProperties);
@@ -77,7 +77,7 @@ namespace vk {
 		return Ok(make_shared<Vulkan>(module, fns));
 	}
 
-	Vulkan::Vulkan(const void* module, Fns fns) : module(module), fns(fns) {}
+	Vulkan::Vulkan(const void* module, VulkanFns fns) : module(module), fns(fns) {}
 
 	Vulkan::Vulkan(Vulkan&& other) : module(other.module), fns(other.fns) {
 		other.module = nullptr;
@@ -111,14 +111,14 @@ namespace vk {
 	// * VK_ERROR_OUT_OF_HOST_MEMORY
 	// * VK_ERROR_OUT_OF_DEVICE_MEMORY
 	// * VK_ERROR_LAYER_NOT_PRESENT
-	Result<Vec<ExtProps>, InstanceExtPropsError> Vulkan::instanceExtProps() const {
+	Result<Vec<ExtProps>, VkResult> Vulkan::instanceExtProps() const {
 		// Extensions can change at any time. If an extension is added between function calls, the second call may
 		// return VK_INCOMPLETE, so we try again until we get VK_SUCCESS.
 		while (true) {
 			u32 size;
 			auto res = this->fns.vkEnumerateInstanceExtensionProperties(nullptr, &size, nullptr);
 			if (res != VK_SUCCESS) {
-				return Err(static_cast<InstanceExtPropsError>(res));
+				return Err(res);
 			}
 
 			Vec<ExtProps> ret(size);
@@ -127,7 +127,7 @@ namespace vk {
 			if (res == VK_SUCCESS) {
 				return Ok(ret);
 			} else if (res != VK_INCOMPLETE) {
-				return Err(static_cast<InstanceExtPropsError>(res));
+				return Err(res);
 			}
 		}
 	}
@@ -138,14 +138,14 @@ namespace vk {
 	// Failure
 	// * VK_ERROR_OUT_OF_HOST_MEMORY
 	// * VK_ERROR_OUT_OF_DEVICE_MEMORY
-	Result<Vec<LayerProps>, InstanceLayerPropsError> Vulkan::instanceLayerProps() const {
+	Result<Vec<LayerProps>, VkResult> Vulkan::instanceLayerProps() const {
 		// Layers can change at any time. If an layer is added between function calls, the second call may
 		// return VK_INCOMPLETE, so we try again until we get VK_SUCCESS.
 		while (true) {
 			u32 size;
 			auto res = this->fns.vkEnumerateInstanceLayerProperties(&size, nullptr);
 			if (res != VK_SUCCESS) {
-				return Err(static_cast<InstanceLayerPropsError>(res));
+				return Err(res);
 			}
 
 			Vec<LayerProps> ret(size);
@@ -154,7 +154,7 @@ namespace vk {
 			if (res == VK_SUCCESS) {
 				return Ok(ret);
 			} else if (res != VK_INCOMPLETE) {
-				return Err(static_cast<InstanceLayerPropsError>(res));
+				return Err(res);
 			}
 		}
 	}

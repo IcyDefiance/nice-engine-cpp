@@ -15,7 +15,7 @@ namespace vk {
 	// * VK_ERROR_LAYER_NOT_PRESENT
 	// * VK_ERROR_EXTENSION_NOT_PRESENT
 	// * VK_ERROR_INCOMPATIBLE_DRIVER
-	Result<Ref<Instance>, InstanceCreateErr> Instance::create(Ref<Vulkan> lib) {
+	Result<Ref<Instance>, VkResult> Instance::create(Ref<Vulkan> lib) {
 		VkInstanceCreateInfo createInfo;
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 		createInfo.pNext = nullptr;
@@ -30,10 +30,10 @@ namespace vk {
 		VkInstance vk;
 		auto res = lib->fns.vkCreateInstance(&createInfo, nullptr, &vk);
 		if (res != VK_SUCCESS) {
-			return Err(static_cast<InstanceCreateErr>(res));
+			return Err(res);
 		}
 
-		Fns fns;
+		InstanceFns fns;
 		LOAD_VK_INSTANCE_PFN(vk, vkCreateDevice);
 		LOAD_VK_INSTANCE_PFN(vk, vkDestroyInstance);
 		LOAD_VK_INSTANCE_PFN(vk, vkEnumeratePhysicalDevices);
@@ -42,7 +42,7 @@ namespace vk {
 		return Ok(make_shared<Instance>(lib, vk, fns));
 	}
 
-	Instance::Instance(Ref<Vulkan> lib, VkInstance vk, Fns fns) : lib(lib), vk(vk), fns(fns) {}
+	Instance::Instance(Ref<Vulkan> lib, VkInstance vk, InstanceFns fns) : lib(lib), vk(vk), fns(fns) {}
 
 	Instance::Instance(Instance&& other) : lib(other.lib), vk(other.vk), fns(other.fns) {
 		other.vk = nullptr;
