@@ -1,5 +1,5 @@
 add_library(vk src/vk.cpp src/version.cpp src/instance.cpp src/physical-device.cpp src/device.cpp)
-target_link_libraries(vk fmt)
+target_link_libraries(vk fmt SDL2)
 set_property(TARGET vk PROPERTY CXX_STANDARD 17)
 target_include_directories(vk PRIVATE ../../include ../util/include)
 target_include_directories(vk PUBLIC ../util/include ../Vulkan-Headers/include)
