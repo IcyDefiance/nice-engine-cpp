@@ -64,7 +64,7 @@ Result<Ref<Gfx>, const char*> Gfx::create(const char* name, u32 version) {
 	if (SDL_Init(SDL_INIT_VIDEO) || SDL_Vulkan_LoadLibrary(nullptr)) {
 		return Err(SDL_GetError());
 	}
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(static_cast<PFN_vkGetInstanceProcAddr>(SDL_Vulkan_GetVkGetInstanceProcAddr()));
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(reinterpret_cast<PFN_vkGetInstanceProcAddr>(SDL_Vulkan_GetVkGetInstanceProcAddr()));
 
 	auto instance = createInstance(name, version);
 #ifndef NDEBUG

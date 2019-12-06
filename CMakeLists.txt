@@ -4,7 +4,8 @@ project(space-thing VERSION 0.1.0)
 include(CTest)
 enable_testing()
 
-option(VIDEO_VULKAN ON)
+option(VIDEO_VULKAN OFF)
+set(VIDEO_VULKAN ON)
 
 add_subdirectory(lib/fmt)
 add_subdirectory(lib/SDL)

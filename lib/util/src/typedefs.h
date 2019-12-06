@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <memory>
 
 using u32 = uint32_t;
 using u16 = uint16_t;
@@ -13,9 +14,9 @@ template <typename T, typename Allocator = std::allocator<T>>
 class Vec : public std::vector<T, Allocator> {
 public:
 	Vec() noexcept(noexcept(Allocator())) : std::vector<T, Allocator>() {}
-	explicit Vec( const Allocator& alloc ) : std::vector<T, Allocator>(alloc) noexcept {}
-	Vec(size_type count, const T& value, const Allocator& alloc = Allocator()) : std::vector<T, Allocator>(count, value, alloc) {}
-	explicit Vec(size_type count, const Allocator& alloc = Allocator()) : std::vector<T, Allocator>(count, alloc) {}
+	explicit Vec(const Allocator& alloc) noexcept : std::vector<T, Allocator>(alloc) {}
+	Vec(size_t count, const T& value, const Allocator& alloc = Allocator()) : std::vector<T, Allocator>(count, value, alloc) {}
+	explicit Vec(size_t count, const Allocator& alloc = Allocator()) : std::vector<T, Allocator>(count, alloc) {}
 	template<class InputIt>
 	Vec(InputIt first, InputIt last, const Allocator& alloc = Allocator()) : std::vector<T, Allocator>(first, last, alloc) {}
 	Vec(const Vec& other) = delete;
