@@ -45,6 +45,9 @@ private:
 	T source;
 };
 
+template <typename R, typename T>
+R iter(T&& source);
+
 template <typename T>
 OwnedIter<T> iter(T&& source) {
 	return OwnedIter(move(source));
@@ -65,7 +68,7 @@ struct TransformIter {
 
 	Opt<Item> next() {
 		if (const auto value = iter.next()) {
-			return func(*value);
+			return Some(func(*value));
 		} else {
 			return None();
 		}
@@ -84,6 +87,11 @@ struct Transform {
 };
 
 template <typename I, typename F>
+TransformIter<I, F> iter(TransformIter<I, F>&& source) {
+	return move(source);
+}
+
+template <typename I, typename F>
 TransformIter<I, F> operator|(I iter, Transform<F> proxy) {
 	return TransformIter(move(iter), proxy.func);
 }
@@ -97,7 +105,7 @@ struct FilterIter {
 	Opt<Item> next() {
 		while (const auto value = iter.next()) {
 			if (func(*value)) {
-				return value;
+				return Some(value);
 			}
 		}
 

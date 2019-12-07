@@ -3,8 +3,8 @@
 
 template<typename T>
 struct Some {
-	Some(T& val): val(val) {}
-	Some(T&& val): val(std::move(val)) {}
+	explicit Some(T& val): val(val) {}
+	explicit Some(T&& val): val(std::move(val)) {}
 
 	T&& unwrap() && { return std::move(this->val); }
 

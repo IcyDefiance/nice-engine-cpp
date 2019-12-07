@@ -4,10 +4,11 @@ template <typename T>
 class Vec {
 public:
 	using size_type = size_t;
+	using value_type = T;
 
 	std::vector<T> inner;
 
-	Vec() {}
+	Vec() = default;
 	Vec(size_type count, const T& value) : inner(count, value) {}
 	explicit Vec(size_type count) : inner(count) {}
 	template<class InputIt>

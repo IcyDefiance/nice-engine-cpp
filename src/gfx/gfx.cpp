@@ -2,19 +2,16 @@
 #include "fmt/core.h"
 #include "SDL.h"
 #include "SDL_vulkan.h"
-#include <set>
 
 using namespace std;
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 vk::UniqueInstance createInstance(const char* applicationName, u32 applicationVersion) {
-	set prefLayers {"VK_LAYER_LUNARG_standard_validation"};
-	auto layerProps = vk::enumerateInstanceLayerProperties();
-	auto layers = iter(layerProps)
-		| Transform([&](auto&& x) { return x.get().layerName; })
-		| Filter([&](auto&& x) { return prefLayers.find(x) != prefLayers.end(); })
-		| ToVec();
+	Set prefLayers {"VK_LAYER_LUNARG_standard_validation"};
+	auto layerProps = iter(vk::enumerateInstanceLayerProperties())
+		| Transform([&](auto&& x) -> const char* { return x.layerName; });
+	auto layers = prefLayers.intersection(move(layerProps)) | ToVec();
 
 	auto applicationInfo = vk::ApplicationInfo()
 		.setPApplicationName(applicationName)
@@ -29,6 +26,8 @@ vk::UniqueInstance createInstance(const char* applicationName, u32 applicationVe
 
 	auto ci = vk::InstanceCreateInfo()
 		.setPApplicationInfo(&applicationInfo)
+		.setEnabledLayerCount(static_cast<u32>(layers.size()))
+		.setPpEnabledLayerNames(layers.data())
 		.setEnabledExtensionCount(static_cast<u32>(exts.size()))
 		.setPpEnabledExtensionNames(exts.data());
 
