@@ -36,7 +36,17 @@ struct Set  {
 		const key_equal& equal = key_equal()
 	) : inner(init, bucket_count, hash, equal) {}
 
-	bool contains(const Key& key) const { return inner.find(key) != inner.end(); }
+	/* Capacity */
+
+	size_type size() const noexcept { return inner.size() }
+
+	/* Lookup */
+
+	bool contains(const Key& key) const {
+		return inner.find(key) != inner.end();
+	}
+
+	/* Operations */
 
 	template <typename I>
 	Intersection<Set, I> intersection(I&& other) const { return Intersection(*this, move(other)); }

@@ -4,22 +4,21 @@
 #include "SDL_vulkan.h"
 
 using namespace std;
-using namespace util;
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 vk::UniqueInstance createInstance(const char* applicationName, u32 applicationVersion) {
-	Set prefLayers({"VK_LAYER_LUNARG_standard_validation"}, 0, hash_cstr());
-	auto layerProps = vk::enumerateInstanceLayerProperties();
-	auto layerNames = iter(layerProps)
-		| Transform([&](auto&& x) -> const char* { return x.get().layerName; });
-	auto layers = prefLayers.intersection(move(layerNames))
-		| ToVec();
-
 	auto applicationInfo = vk::ApplicationInfo()
 		.setPApplicationName(applicationName)
 		.setApplicationVersion(applicationVersion)
 		.setApiVersion(VK_API_VERSION_1_1);
+
+	Set<string> prefLayers {"VK_LAYER_LUNARG_standard_validation"};
+	auto layerProps = vk::enumerateInstanceLayerProperties();
+	auto layerNames = iter(layerProps)
+		| Transform([&](auto&& x) { return x.get().layerName; });
+	auto layers = prefLayers.intersection(move(layerNames))
+		| ToVec();
 
 #ifdef NDEBUG
 	Vec exts;
@@ -40,12 +39,14 @@ vk::UniqueInstance createInstance(const char* applicationName, u32 applicationVe
 }
 
 VkBool32 debugUtilsMessengerCallback(
-    vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    vk::DebugUtilsMessageTypeFlagsEXT messageTypes,
-    const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
-    void* pUserData
+	VkDebugUtilsMessageSeverityFlagBitsEXT vkMessageSeverity,
+	VkDebugUtilsMessageTypeFlagsEXT vkMessageTypes,
+	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+	void* pUserData
 ) {
-	fmt::print("{} ({}) {}", vk::to_string(messageSeverity), vk::to_string(messageTypes), pCallbackData->pMessage);
+	auto messageSeverity = static_cast<vk::DebugUtilsMessageSeverityFlagBitsEXT>(vkMessageSeverity);
+	vk::DebugUtilsMessageTypeFlagsEXT messageTypes(vkMessageTypes);
+	fmt::print("{} {} {}\n", vk::to_string(messageSeverity), vk::to_string(messageTypes), pCallbackData->pMessage);
 	return VK_FALSE;
 }
 
@@ -63,7 +64,7 @@ vk::UniqueDebugUtilsMessengerEXT createDebugMessenger(const vk::Instance& instan
 			| vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation
 			| vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance
 		)
-		.setPfnUserCallback(reinterpret_cast<PFN_vkDebugUtilsMessengerCallbackEXT>(debugUtilsMessengerCallback));
+		.setPfnUserCallback(debugUtilsMessengerCallback);
 
 	return instance.createDebugUtilsMessengerEXTUnique(ci);
 }
