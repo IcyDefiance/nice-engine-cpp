@@ -2,8 +2,9 @@
 #include <string>
 #include <memory>
 
-using u32 = uint32_t;
+using i32 = int32_t;
 using u16 = uint16_t;
+using u32 = uint32_t;
 using usize = size_t;
 
 template <typename T> using Ptr = std::unique_ptr<T>;

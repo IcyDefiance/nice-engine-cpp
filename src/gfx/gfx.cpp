@@ -4,14 +4,17 @@
 #include "SDL_vulkan.h"
 
 using namespace std;
+using namespace util;
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 vk::UniqueInstance createInstance(const char* applicationName, u32 applicationVersion) {
-	Set prefLayers {"VK_LAYER_LUNARG_standard_validation"};
-	auto layerProps = iter(vk::enumerateInstanceLayerProperties())
-		| Transform([&](auto&& x) -> const char* { return x.layerName; });
-	auto layers = prefLayers.intersection(move(layerProps)) | ToVec();
+	Set prefLayers({"VK_LAYER_LUNARG_standard_validation"}, 0, hash_cstr());
+	auto layerProps = vk::enumerateInstanceLayerProperties();
+	auto layerNames = iter(layerProps)
+		| Transform([&](auto&& x) -> const char* { return x.get().layerName; });
+	auto layers = prefLayers.intersection(move(layerNames))
+		| ToVec();
 
 	auto applicationInfo = vk::ApplicationInfo()
 		.setPApplicationName(applicationName)
