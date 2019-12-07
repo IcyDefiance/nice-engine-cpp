@@ -2,13 +2,20 @@
 #include "fmt/core.h"
 #include "SDL.h"
 #include "SDL_vulkan.h"
-#include <memory>
+#include <set>
 
 using namespace std;
 
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE;
 
 vk::UniqueInstance createInstance(const char* applicationName, u32 applicationVersion) {
+	set prefLayers {"VK_LAYER_LUNARG_standard_validation"};
+	auto layerProps = vk::enumerateInstanceLayerProperties();
+	auto layers = iter(layerProps)
+		| Transform([&](auto&& x) { return x.get().layerName; })
+		| Filter([&](auto&& x) { return prefLayers.find(x) != prefLayers.end(); })
+		| ToVec();
+
 	auto applicationInfo = vk::ApplicationInfo()
 		.setPApplicationName(applicationName)
 		.setApplicationVersion(applicationVersion)
@@ -71,11 +78,10 @@ Result<Ref<Gfx>, const char*> Gfx::create(const char* name, u32 version) {
 	auto debugMessenger = createDebugMessenger(*instance);
 #endif
 
-	Ref<Gfx> ret2(new Gfx {
+	return Ok(Ref<Gfx>(new Gfx {
 		move(instance),
 #ifndef NDEBUG
 		move(debugMessenger)
 #endif
-	});
-	return Ok(ret2);
+	}));
 }

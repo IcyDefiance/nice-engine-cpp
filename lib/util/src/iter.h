@@ -1,5 +1,7 @@
 #pragma once
 #include "opt.h"
+#include "typedefs.h"
+#include "vec.h"
 
 /*** ROOTS ***/
 
@@ -86,7 +88,51 @@ TransformIter<I, F> operator|(I iter, Transform<F> proxy) {
 	return TransformIter(move(iter), proxy.func);
 }
 
+template <typename I, typename F>
+struct FilterIter {
+	using Item = typename I::Item;
+
+	FilterIter(I&& iter, F func) : iter(move(iter)), func(func) {}
+
+	Opt<Item> next() {
+		while (const auto value = iter.next()) {
+			if (func(*value)) {
+				return value;
+			}
+		}
+
+		return None();
+	}
+
+private:
+	I iter;
+	F func;
+};
+
+template <typename F>
+struct Filter {
+	F func;
+
+	explicit Filter(F func) : func(func) {}
+};
+
+template <typename I, typename F>
+FilterIter<I, F> operator|(I iter, Filter<F> proxy) {
+	return FilterIter(move(iter), proxy.func);
+}
+
 /*** COLLECTORS ***/
+
+struct ToVec {};
+
+template <typename I>
+Vec<typename I::Item> operator|(I& iter, ToVec proxy) {
+	Vec<I::Item> vec;
+	while (auto&& item = iter.next()) {
+		vec.push(move(item).unwrap());
+	}
+	return vec;
+}
 
 struct Count {};
 
