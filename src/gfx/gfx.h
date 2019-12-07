@@ -9,4 +9,6 @@ struct Gfx {
 #ifndef NDEBUG
 	vk::UniqueDebugUtilsMessengerEXT debugMessenger;
 #endif
+	vk::UniqueDevice device;
+	vk::Queue queue;
 };

@@ -38,7 +38,7 @@ struct Set  {
 
 	/* Capacity */
 
-	size_type size() const noexcept { return inner.size() }
+	size_type size() const noexcept { return inner.size(); }
 
 	/* Lookup */
 

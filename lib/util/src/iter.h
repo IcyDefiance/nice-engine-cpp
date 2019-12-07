@@ -29,15 +29,15 @@ template <typename T>
 struct OwnedIter {
 	using Item = typename T::value_type;
 
-	explicit OwnedIter(T&& source) : source(move(source)) {
+	explicit OwnedIter(T&& source) : source(std::move(source)) {
 		iter = StdIter(source.begin(), source.end());
 	}
-	OwnedIter(OwnedIter&& other) : source(move(other.source)) {
+	OwnedIter(OwnedIter&& other) : source(std::move(other.source)) {
 		iter = StdIter(source.begin(), source.end());
 	}
 
 	Opt<Item> next() {
-		return iter.next().map([](auto& x) { return move(x.get()); });
+		return iter.next().map([](auto&& x) { return std::move(x.get()); });
 	}
 
 private:
@@ -50,7 +50,7 @@ R iter(T&& source);
 
 template <typename T>
 OwnedIter<T> iter(T&& source) {
-	return OwnedIter(move(source));
+	return OwnedIter(std::move(source));
 }
 
 template <typename T>
@@ -60,14 +60,42 @@ StdIter<typename T::iterator, typename T::iterator> iter(T& source) {
 
 /*** OPERATORS ***/
 
-template <typename I, typename F>
-struct TransformIter {
-	using Item = decltype(std::declval<F>()(std::declval<I::Item>()));
+template <typename I>
+struct EnumerateIter {
+	using Item = std::pair<usize, typename I::Item>;
 
-	TransformIter(I&& iter, F func) : iter(move(iter)), func(func) {}
+	EnumerateIter(I&& iter) : iter(std::move(iter)) {}
 
 	Opt<Item> next() {
-		if (const auto value = iter.next()) {
+		if (auto value = iter.next()) {
+			return Some(std::pair{idx++, *value});
+		} else {
+			return None();
+		}
+	}
+
+private:
+	I iter;
+	usize idx = 0;
+};
+
+struct Enumerate {
+	Enumerate() {}
+};
+
+template <typename I>
+EnumerateIter<I> operator|(I iter, Enumerate proxy) {
+	return EnumerateIter(std::move(iter));
+}
+
+template <typename I, typename F>
+struct TransformIter {
+	using Item = decltype(std::declval<F>()(std::declval<typename I::Item>()));
+
+	TransformIter(I&& iter, F func) : iter(std::move(iter)), func(func) {}
+
+	Opt<Item> next() {
+		if (auto value = iter.next()) {
 			return Some(func(*value));
 		} else {
 			return None();
@@ -87,25 +115,20 @@ struct Transform {
 };
 
 template <typename I, typename F>
-TransformIter<I, F> iter(TransformIter<I, F>&& source) {
-	return move(source);
-}
-
-template <typename I, typename F>
 TransformIter<I, F> operator|(I iter, Transform<F> proxy) {
-	return TransformIter(move(iter), proxy.func);
+	return TransformIter(std::move(iter), proxy.func);
 }
 
 template <typename I, typename F>
 struct FilterIter {
 	using Item = typename I::Item;
 
-	FilterIter(I&& iter, F func) : iter(move(iter)), func(func) {}
+	FilterIter(I&& iter, F func) : iter(std::move(iter)), func(func) {}
 
 	Opt<Item> next() {
-		while (const auto value = iter.next()) {
+		while (auto value = iter.next()) {
 			if (func(*value)) {
-				return Some(value);
+				return Some(*value);
 			}
 		}
 
@@ -126,7 +149,7 @@ struct Filter {
 
 template <typename I, typename F>
 FilterIter<I, F> operator|(I iter, Filter<F> proxy) {
-	return FilterIter(move(iter), proxy.func);
+	return FilterIter(std::move(iter), proxy.func);
 }
 
 /*** COLLECTORS ***/
@@ -134,10 +157,10 @@ FilterIter<I, F> operator|(I iter, Filter<F> proxy) {
 struct ToVec {};
 
 template <typename I>
-Vec<typename I::Item> operator|(I& iter, ToVec proxy) {
-	Vec<I::Item> vec;
+Vec<typename I::Item> operator|(I iter, ToVec proxy) {
+	Vec<typename I::Item> vec;
 	while (auto&& item = iter.next()) {
-		vec.push(move(item).unwrap());
+		vec.push(std::move(item).unwrap());
 	}
 	return vec;
 }
@@ -145,7 +168,7 @@ Vec<typename I::Item> operator|(I& iter, ToVec proxy) {
 struct Count {};
 
 template <typename I>
-usize operator|(I& iter, Count proxy) {
+usize operator|(I iter, Count proxy) {
 	usize count = 0;
 	while (iter.next()) {
 		count++;
@@ -156,6 +179,6 @@ usize operator|(I& iter, Count proxy) {
 struct First {};
 
 template <typename I>
-Opt<typename I::Item> operator|(I& iter, First proxy) {
+Opt<typename I::Item> operator|(I iter, First proxy) {
 	return iter.next();
 }

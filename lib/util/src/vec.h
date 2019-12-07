@@ -22,6 +22,11 @@ public:
 	T* data() noexcept { return inner.data(); }
 	const T* data() const noexcept { return inner.data(); }
 
+	/* Iterators */
+
+	typename std::vector<T>::iterator begin() noexcept { return inner.begin(); }
+	typename std::vector<T>::iterator end() noexcept { return inner.end(); }
+
 	/* Capacity */
 
 	size_type size() const noexcept { return inner.size(); }

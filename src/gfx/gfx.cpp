@@ -13,6 +13,10 @@ vk::UniqueInstance createInstance(const char* applicationName, u32 applicationVe
 		.setApplicationVersion(applicationVersion)
 		.setApiVersion(VK_API_VERSION_1_1);
 
+#ifdef NDEBUG
+	Vec layers;
+	Vec exts;
+#else
 	Set<string> prefLayers {"VK_LAYER_LUNARG_standard_validation"};
 	auto layerProps = vk::enumerateInstanceLayerProperties();
 	auto layerNames = iter(layerProps)
@@ -20,11 +24,9 @@ vk::UniqueInstance createInstance(const char* applicationName, u32 applicationVe
 	auto layers = prefLayers.intersection(move(layerNames))
 		| ToVec();
 
-#ifdef NDEBUG
-	Vec exts;
-#else
 	Vec exts {"VK_EXT_debug_utils"};
 #endif
+
 
 	auto ci = vk::InstanceCreateInfo()
 		.setPApplicationInfo(&applicationInfo)
@@ -51,7 +53,7 @@ VkBool32 debugUtilsMessengerCallback(
 }
 
 #ifndef NDEBUG
-vk::UniqueDebugUtilsMessengerEXT createDebugMessenger(const vk::Instance& instance) {
+vk::UniqueDebugUtilsMessengerEXT createDebugMessenger(vk::Instance instance) {
 	auto ci = vk::DebugUtilsMessengerCreateInfoEXT()
 		.setMessageSeverity(
 			vk::DebugUtilsMessageSeverityFlagBitsEXT::eError
@@ -70,6 +72,31 @@ vk::UniqueDebugUtilsMessengerEXT createDebugMessenger(const vk::Instance& instan
 }
 #endif
 
+pair<vk::UniqueDevice, vk::Queue> createDevice(vk::Instance instance) {
+	auto pdevice = instance.enumeratePhysicalDevices()[0];
+
+	auto qfam = (iter(pdevice.getQueueFamilyProperties())
+		| Enumerate()
+		| Filter([](auto&& pair) { return pair.second.queueFlags & vk::QueueFlagBits::eGraphics; })
+		| Transform([](auto&& pair) { return pair.first; })
+		| First())
+		.unwrap();
+
+	f32 priority = 1;
+	auto qci = vk::DeviceQueueCreateInfo()
+		.setQueueFamilyIndex(qfam)
+		.setQueueCount(1)
+		.setPQueuePriorities(&priority);
+
+	auto ci = vk::DeviceCreateInfo()
+		.setQueueCreateInfoCount(1)
+		.setPQueueCreateInfos(&qci);
+
+	auto device = pdevice.createDeviceUnique(ci);
+	auto queue = device->getQueue(qfam, 0);
+	return pair(move(device), queue);
+}
+
 Result<Ref<Gfx>, const char*> Gfx::create(const char* name, u32 version) {
 	if (SDL_Init(SDL_INIT_VIDEO) || SDL_Vulkan_LoadLibrary(nullptr)) {
 		return Err(SDL_GetError());
@@ -81,10 +108,14 @@ Result<Ref<Gfx>, const char*> Gfx::create(const char* name, u32 version) {
 	auto debugMessenger = createDebugMessenger(*instance);
 #endif
 
+	auto [device, queue] = createDevice(*instance);
+
 	return Ok(Ref<Gfx>(new Gfx {
 		move(instance),
 #ifndef NDEBUG
-		move(debugMessenger)
+		move(debugMessenger),
 #endif
+		move(device),
+		queue,
 	}));
 }
