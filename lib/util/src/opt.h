@@ -37,6 +37,12 @@ public:
 		}
 	}
 
+	Opt<T> take() {
+		Opt ret { None() };
+		val.swap(ret.val);
+		return Opt { ret };
+	}
+
 	T&& unwrap() && {
 		return std::get<Some<T>>(std::move(this->val)).unwrap();
 	}
